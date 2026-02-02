@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: ai-knowledge-assistant
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ai_knowledge_assistant
+    username: postgres
+    password: Libin@010
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  profiles:
+    active: dev
