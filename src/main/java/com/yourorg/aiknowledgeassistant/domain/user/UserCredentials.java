@@ -1,6 +1,7 @@
 package com.yourorg.aiknowledgeassistant.domain.user;
 
 import jakarta.persistence.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 
@@ -42,5 +43,9 @@ public class UserCredentials {
 
     public Instant getPasswordUpdatedAt() {
         return passwordUpdatedAt;
+    }
+
+    public boolean matchesPassword(String rawPassword , PasswordEncoder encoder) {
+        return encoder.matches(rawPassword , this.passwordHash);
     }
 }

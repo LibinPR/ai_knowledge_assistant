@@ -3,6 +3,10 @@ package com.yourorg.aiknowledgeassistant.domain.user;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(
@@ -34,7 +38,22 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "token_version" , nullable = false)
+    private int tokenVersion = 0;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
+
     protected User() {}
+
+    public void addRole(Role role) {
+        this.roles.add(role);
+    }
 
     public User(String email) {
         this.email = email;
@@ -75,5 +94,23 @@ public class User {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Set<Role> getRoles() {
+        return Collections.unmodifiableSet(roles);
+    }
+
+    public Set<String> rolesNames() {
+        return roles.stream()
+                .map(Role::getName)
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void incrementTokenVersion() {
+        this.tokenVersion++;
     }
 }

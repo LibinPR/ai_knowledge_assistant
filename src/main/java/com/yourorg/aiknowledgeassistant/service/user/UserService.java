@@ -4,6 +4,7 @@ import com.yourorg.aiknowledgeassistant.domain.user.Role;
 import com.yourorg.aiknowledgeassistant.domain.user.User;
 import com.yourorg.aiknowledgeassistant.domain.user.UserCredentials;
 import com.yourorg.aiknowledgeassistant.domain.user.UserRole;
+import com.yourorg.aiknowledgeassistant.exception.EmailAlreadyExistsException;
 import com.yourorg.aiknowledgeassistant.repository.user.RoleRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserCredentialsRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserRepository;
@@ -40,16 +41,14 @@ public class UserService {
     }
 
     @Transactional
-    public void registerUser(String email , String rawPassword) {
+    public Long registerUser(String email , String rawPassword) {
 
         if(userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already Registered");
+            throw new EmailAlreadyExistsException("Email already Registered");
         }
 
         User user = new User(email);
         userRepository.saveAndFlush(user);
-
-        userRepository.flush();
 
         String hashedPassword = passwordEncoder.encode(rawPassword);
         UserCredentials credentials = new UserCredentials(user , hashedPassword);
@@ -68,5 +67,17 @@ public class UserService {
                 user.getId(),
                 null
         );
+        return user.getId();
+    }
+
+    @Transactional
+    public void assignRole(Long userId , String roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow();
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow();
+
+        user.addRole(role);
     }
 }

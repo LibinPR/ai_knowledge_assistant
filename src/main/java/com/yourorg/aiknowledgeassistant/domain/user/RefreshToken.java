@@ -8,8 +8,8 @@ import java.time.Instant;
 @Table(
         name = "refresh_tokens",
         indexes = {
-                @Index(name = "idx_refresh_tokens_token" , columnList = "token"),
-                @Index(name = "idx_refresh_tokens_user_id" , columnList = "user_id")
+                @Index(name = "idx_refresh_tokens_jti", columnList = "jti"),
+                @Index(name = "idx_refresh_tokens_user_id", columnList = "user_id")
         }
 )
 public class RefreshToken {
@@ -18,12 +18,12 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY , optional = false)
-    @JoinColumn(name = "user_id" , nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 512 , unique = true)
-    private String token;
+    @Column(nullable = false, unique = true)
+    private String jti;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
@@ -31,14 +31,17 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
-    @Column(name = "created_at" , nullable = false , updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Version
+    private Long version;
 
     protected RefreshToken() {}
 
-    public RefreshToken(User user, String token , Instant expiresAt) {
+    public RefreshToken(User user, String jti, Instant expiresAt) {
         this.user = user;
-        this.token = token;
+        this.jti = jti;
         this.expiresAt = expiresAt;
         this.revoked = false;
         this.createdAt = Instant.now();
@@ -48,8 +51,8 @@ public class RefreshToken {
         return user;
     }
 
-    public String getToken() {
-        return token;
+    public String getJti() {
+        return jti;
     }
 
     public Instant getExpiresAt() {
