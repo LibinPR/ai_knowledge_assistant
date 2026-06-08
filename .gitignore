@@ -32,3 +32,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+target/
+.env
+*.env
+application-prod.yaml

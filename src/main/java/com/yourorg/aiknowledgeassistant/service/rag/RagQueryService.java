@@ -4,6 +4,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.yourorg.aiknowledgeassistant.dto.SearchResult;
+import com.yourorg.aiknowledgeassistant.dto.QueryResponse;
+import com.yourorg.aiknowledgeassistant.dto.SourceDto;
+import com.yourorg.aiknowledgeassistant.repository.rag.DocumentChunkRepository;
 
 @Service
 public class RagQueryService {
@@ -17,23 +21,54 @@ public class RagQueryService {
         this.groqClient = groqClient;
     }
 
-    public String query(String question) {
-        List<String> relevantChunks = similaritySearchService.search(question);
+    public QueryResponse query(String question , Long userId) {
+        List<SearchResult> results = similaritySearchService.search(
+                                                question,
+                                                userId 
+                                            );
 
-        if(relevantChunks.isEmpty()) {
-            return "I don't have enough information to answer that question.";
+        if(results.isEmpty()) {
+            return new QueryResponse("I don't have enough information to answer that question.", List.of());
         }
 
-        String context = relevantChunks.stream()
+        String context = results.stream()
+                .map(SearchResult::content)
                 .collect(Collectors.joining("\n\n---\n\n"));
+                
 
         String systemPrompt = """
-                You are a helpful assistant. Answer the user's question using ONLY the context provided below.
-                If the answer is not in the context, say "I don't know based on the provided documents."
+                You are a retrieval-augmented AI assistant.
+
+                Rules:
+                1. Answer ONLY from the provided context.
+                2. Do not invent facts and make assumptions.
+                3. If information is missing, say:
+                    "I don't know based on the uploaded documents."
+                4. Keep answers concise and factual.
+                5. Quote exact values , dates and amounts whenever available.
                 
                 Context:
                 """ + context;
 
-        return groqClient.chat(systemPrompt,question);
+        String answer = groqClient.chat(systemPrompt,question);
+
+        List<SourceDto> sources = results.stream()
+            .sorted((a,b) -> Double.compare(b.similarity(), a.similarity())) // Sort by similarity
+                .collect(
+                    Collectors.toMap(
+                        SearchResult::documentId,
+                        r -> new SourceDto(
+                            r.documentId(),
+                            r.documentName(),
+                            r.similarity()
+                        ),
+                        (existing , replacement) -> existing
+                    )
+                )
+                .values()
+                .stream()
+                .toList();
+
+        return new QueryResponse(answer , sources);
     }
 }

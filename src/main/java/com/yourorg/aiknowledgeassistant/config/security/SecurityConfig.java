@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.yourorg.aiknowledgeassistant.config.RateLimitFilter;
 
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -19,7 +20,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtFilter
+            JwtAuthenticationFilter jwtFilter,
+            RateLimitFilter rateLimitFilter
     ) throws Exception {
 
         http
@@ -30,13 +32,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
-                        .requestMatchers("/api/rag/**").permitAll()
+                        .requestMatchers("/api/rag/**").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("USER","ADMIN")
+                        .requestMatchers("/" , "/index.html" , "/*.js" , "/*.css").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(
+                        rateLimitFilter,
+                        JwtAuthenticationFilter.class
+                );
 
         return http.build();
     }

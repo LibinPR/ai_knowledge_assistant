@@ -5,9 +5,11 @@ import com.yourorg.aiknowledgeassistant.repository.rag.DocumentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import com.yourorg.aiknowledgeassistant.domain.rag.Document;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class DocumentManagementService {
   private final DocumentRepository documentRepository;
 

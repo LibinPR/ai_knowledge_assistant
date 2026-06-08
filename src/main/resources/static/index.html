@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Knowledge Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --accent: #7c6dfa;
+    --accent2: #4fd1c5;
+    --text: #e8e8f0;
+    --text2: #8888aa;
+    --danger: #f87171;
+    --success: #34d399;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,109,250,0.18) 0%, transparent 70%),
+      var(--bg);
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .auth-logo span {
+    display: inline-block;
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .auth-subtitle {
+    color: var(--text2);
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 12px;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* ── APP SCREEN ── */
+  #app-screen {
+    display: none;
+    height: 100vh;
+    flex-direction: column;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .topbar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar-logo span {
+    display: inline-block;
+    width: 24px; height: 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 6px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-badge {
+    font-size: 12px;
+    color: var(--text2);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+  }
+
+  .btn-logout {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text2);
+    margin-bottom: 12px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(124,109,250,0.05);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .upload-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .upload-text {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+
+  .upload-text strong { color: var(--accent); }
+
+  .btn-upload {
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: none;
+  }
+
+  .btn-upload:hover { opacity: 0.85; }
+
+  .upload-status {
+    font-size: 11px;
+    margin-top: 8px;
+    min-height: 16px;
+    text-align: center;
+  }
+
+  .docs-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .doc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.15s;
+    gap: 8px;
+  }
+
+  .doc-item:hover { background: var(--surface2); }
+
+  .doc-name {
+    font-size: 12px;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .doc-date {
+    font-size: 10px;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .btn-delete {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+  }
+
+  .btn-delete:hover { color: var(--danger); }
+
+  .docs-empty {
+    font-size: 12px;
+    color: var(--text2);
+    text-align: center;
+    padding: 20px 12px;
+  }
+
+  /* ── CHAT AREA ── */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(79,209,197,0.04) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .chat-welcome {
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .welcome-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .welcome-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .welcome-sub {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: fadeIn 0.3s ease;
+    max-width: 800px;
+  }
+
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .message.assistant { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .message.user .msg-avatar {
+    background: var(--accent);
+  }
+
+  .message.assistant .msg-avatar {
+    background: linear-gradient(135deg, var(--accent2), #38bdf8);
+  }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: calc(100% - 44px);
+  }
+
+  .message.user .msg-bubble {
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+    white-space: pre-wrap;
+  }
+
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 0;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text2);
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .chat-input-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .chat-input {
+    flex: 1;
+    padding: 13px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    resize: none;
+    height: 48px;
+    max-height: 140px;
+    transition: border-color 0.2s;
+    overflow-y: auto;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+
+  .btn-send {
+    width: 48px; height: 48px;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-send:hover { opacity: 0.85; }
+  .btn-send:active { transform: scale(0.95); }
+  .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span></span>
+      AI Knowledge Assistant
+    </div>
+    <p class="auth-subtitle">Ask questions. Get answers from your documents.</p>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="login()">Login</button>
+    </div>
+
+    <div id="register-form" class="hidden">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" onclick="register()">Create Account</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span></span>
+      AI Knowledge Assistant
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge" id="user-badge">user@example.com</div>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Upload Document</div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="file-input" accept=".pdf,.txt,.md,.docx" onchange="onFileSelected(event)" />
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">
+            <strong>Choose file</strong> or drag & drop<br>
+            PDF, TXT, MD, or DOCX — max 10MB
+          </div>
+        </div>
+        <button class="btn-upload" id="btn-upload" onclick="uploadFile()">Upload</button>
+        <div class="upload-status" id="upload-status"></div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1; overflow:hidden; display:flex; flex-direction:column; padding-bottom:0;">
+        <div class="sidebar-label">Documents</div>
+        <div class="docs-list" id="docs-list">
+          <div class="docs-empty">No documents yet</div>
+        </div>
+      </div>
+
+      <div id="admin-panel" class="sidebar-section" style="display:none;">
+        <div class="sidebar-label">Admin Stats</div>
+        <div id="admin-stats">Loading...</div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="chat-area">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-welcome" id="chat-welcome">
+          <div class="welcome-icon">🧠</div>
+          <div class="welcome-title">Ask your documents anything</div>
+          <div class="welcome-sub">Upload a PDF , TXT ,Markdown or Word document file, then ask questions. The AI will answer using only your documents.</div>
+        </div>
+      </div>
+
+      <div class="chat-input-bar">
+        <textarea class="chat-input" id="chat-input"
+          placeholder="Ask a question about your documents..."
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"></textarea>
+        <button class="btn-send" id="btn-send" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = window.location.origin;  // fixed instead of http://localhost:8080 or null, to work in any environment (dev/prod)
+
+  let accessToken = localStorage.getItem('accessToken') || '';
+  let userEmail = localStorage.getItem('userEmail') || '';
+
+  // ── INIT ──
+  if (accessToken) showApp();
+
+  function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'flex';
+    document.getElementById('user-badge').textContent = userEmail;
+    loadDocuments();
+    loadAdminStats();
+  }
+
+  function showAuth() {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display = 'none';
+  }
+
+  // ── TABS ──
+  function switchTab(tab) {
+    document.getElementById('auth-error').textContent = '';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+    });
+    document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+  }
+
+  // ── AUTH ──
+  async function login() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return setAuthError('Please fill in all fields');
+
+    try {
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return setAuthError(data.error || 'Login failed');
+
+      accessToken = data.accessToken;
+      userEmail = email;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('userEmail', userEmail);
+      // localStorage.setItem('userId' , data.userId); --since backend doesnt send userId
+      showApp();
+    } catch (e) {
+      setAuthError('Could not connect to server');
+    }
+  }
+
+  async function register() {
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!email || !password) return setAuthError('Please fill in all fields');
+
+    try {
+      const res = await fetch(`${API}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        return setAuthError(data.error || 'Registration failed');
+      }
+      setAuthError('');
+      switchTab('login');
+      document.getElementById('login-email').value = email;
+    } catch (e) {
+      setAuthError('Could not connect to server');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userEmail');
+    //no userId sent from backend - chat persiitence depends on this[future]
+    // const userId = localStorage.getItem('userId')
+    //   if(userId) { 
+    //     localStorage.removeItem(`chatHistory_${userId}`);
+    //   }
+    // localStorage.removeItem('userId');
+    document.getElementById('chat-messages').innerHTML = '';
+    accessToken = '';
+    showAuth();
+  }
+
+  function setAuthError(msg) {
+    document.getElementById('auth-error').textContent = msg;
+  }
+
+  // ── DOCUMENTS ──
+  async function loadDocuments() {
+    try {
+      const res = await authFetch('/api/rag/documents');
+      if (!res.ok) return;
+      const docs = await res.json();
+      renderDocs(docs);
+    } catch (e) {}
+  }
+
+  function renderDocs(docs) {
+    const list = document.getElementById('docs-list');
+    if (!docs || docs.length === 0) {
+      list.innerHTML = '<div class="docs-empty">No documents yet</div>';
+      return;
+    }
+    list.innerHTML = docs.map(d => `
+      <div class="doc-item">
+        <span class="doc-name" title="${d.filename}">📄 ${d.filename}</span>
+        <button class="btn-delete" onclick="deleteDoc(${d.id})" title="Delete">✕</button>
+      </div>
+    `).join('');
+  }
+
+  async function deleteDoc(id) {
+    if (!confirm('Delete this document and all its chunks?')) return;
+    try {
+      const res = await authFetch(`/api/rag/documents/${id}`, { method: 'DELETE' });
+      if (res.ok) loadDocuments();
+    } catch (e) {}
+  }
+
+  async function loadAdminStats() {
+    try{
+      const res = await authFetch(
+        '/api/admin/stats'
+      );
+
+      if(!res.ok){
+        return;
+      }
+
+      const stats = await res.json();
+
+      document.getElementById(
+        'admin-panel'
+      ).style.display = 'block';
+
+      document.getElementById(
+        'admin-stats'
+      ).innerHTML = `
+          Users : ${stats.users}<br>
+          Documents : ${stats.documents}<br>
+          Chunks : ${stats.chunks}<br>
+        `;
+    } catch(e) {}
+  }
+
+  // ── UPLOAD ──
+  let selectedFile = null;
+
+  function onFileSelected(e) {
+    selectedFile = e.target.files[0];
+
+    if (!selectedFile) {
+        return;
+    }
+
+    const allowedExtensions = [
+        ".pdf",
+        ".txt",
+        ".md",
+        ".docx"
+    ];
+
+    const filename = selectedFile.name.toLowerCase();
+
+    const valid = allowedExtensions.some(ext =>
+        filename.endsWith(ext)
+    );
+
+    if (!valid) {
+        document.getElementById('upload-status').textContent =
+            'Unsupported file type. Allowed: PDF, TXT, MD, DOCX';
+
+        document.getElementById('upload-status').style.color =
+            'var(--danger)';
+
+        document.getElementById('btn-upload').style.display =
+            'none';
+
+        selectedFile = null;
+        return;
+    }
+
+    document.getElementById('upload-status').textContent =
+        selectedFile.name;
+
+    document.getElementById('upload-status').style.color =
+        'var(--text2)';
+
+    document.getElementById('btn-upload').style.display =
+        'block';
+}
+
+  async function uploadFile() {
+    if (!selectedFile) return;
+    const status = document.getElementById('upload-status');
+    const btn = document.getElementById('btn-upload');
+
+    status.textContent = 'Uploading...';
+    status.style.color = 'var(--accent)';
+    btn.disabled = true;
+
+    const form = new FormData();
+    form.append('file', selectedFile);
+
+    try {
+      const res = await authFetch('/api/rag/ingest', { method: 'POST', body: form });
+      if (res.ok) {
+        status.textContent = '✓ Uploaded successfully';
+        status.style.color = 'var(--success)';
+        selectedFile = null;
+        document.getElementById('file-input').value = '';
+        btn.style.display = 'none';
+        btn.disabled = false;
+        btn.textContent = 'Upload';
+        loadDocuments();
+      } else {
+        const data = await res.json();
+        status.textContent = data.error || 'Upload failed';
+        status.style.color = 'var(--danger)';
+      }
+    } catch (e) {
+      status.textContent = 'Upload failed';
+      status.style.color = 'var(--danger)';
+    }
+    finally{
+      btn.disabled = false;
+    }
+  }
+
+  // ── CHAT ──
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    document.getElementById('chat-welcome')?.remove();
+
+    addMessage('user', question);
+    input.value = '';
+    autoResize(input);
+
+    const typingId = addTyping();
+    document.getElementById('btn-send').disabled = true;
+
+    try {
+      const params = new URLSearchParams({ question });
+      const res = await authFetch(`/api/rag/query?${params}`, {
+        method: 'POST',
+        // headers: { 'Content-Type': 'text/plain' },
+        // body: question
+      });
+      removeTyping(typingId);
+      if (res.ok) {
+
+        const data = await res.json();
+
+        addMessage('assistant', data.answer);
+
+        if (data.sources?.length) {
+
+          const sourceText =
+            "📄 Sources:\n" +
+            data.sources
+              .map(s => 
+                `• ${s.documentName} (${Math.round(s.similarity * 100)}%)`
+              )
+              .join("\n");
+
+          addMessage('assistant', sourceText);
+        }
+      } else if(res.status === 429) {
+        addMessage(
+          'assitant',
+          'Rate limit exceeded . Please wait a minute and try again! '
+        );
+        return;
+      } else{
+        addMessage('assistant', '⚠️ Something went wrong. Please try again.');
+      }
+    } catch (e) {
+      removeTyping(typingId);
+      addMessage('assistant', '⚠️ Could not reach the server.');
+    }
+
+    document.getElementById('btn-send').disabled = false;
+  }
+
+  function addMessage(role, text) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    div.innerHTML = `
+      <div class="msg-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+      <div class="msg-bubble">${escapeHtml(text)}</div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const id = 'typing-' + Date.now();
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'message assistant';
+    div.id = id;
+    div.innerHTML = `
+      <div class="msg-avatar">🤖</div>
+      <div class="msg-bubble">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+  }
+
+  function removeTyping(id) {
+    document.getElementById(id)?.remove();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = '48px';
+    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+  }
+
+  // ── HELPERS ──
+  async function authFetch(url, options = {}) {
+    return fetch(`${API}${url}`, {
+      ...options,
+      headers: {
+        ...options.headers,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+  }
+
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  }
+
+  // drag and drop
+  const zone = document.getElementById('upload-zone');
+  zone?.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone?.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone?.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      selectedFile = file;
+      document.getElementById('upload-status').textContent = file.name;
+      document.getElementById('upload-status').style.color = 'var(--text2)';
+      document.getElementById('btn-upload').style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

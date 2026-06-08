@@ -1,17 +1,19 @@
 package com.yourorg.aiknowledgeassistant.service.rag;
 
 import com.yourorg.aiknowledgeassistant.repository.rag.DocumentChunkRepository;
-import com.yourorg.aiknowledgeassistant.repository.rag.DocumentChunkSummary;
+import com.yourorg.aiknowledgeassistant.repository.rag.SearchResultProjection;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.yourorg.aiknowledgeassistant.dto.SearchResult;
 
 @Service
 public class SimilaritySearchService {
 
-    private static final int TOP_K = 5;
+    private static final int TOP_K = 3;
+    private static final double MIN_SIMILARITY = 0.75;
 
     private final EmbeddingClient embeddingClient;
     private final DocumentChunkRepository documentChunkRepository;
@@ -22,14 +24,31 @@ public class SimilaritySearchService {
         this.documentChunkRepository = documentChunkRepository;
     }
 
-    public List<String> search(String question) {
+    public List<SearchResult> search(
+        String question,
+        Long userId
+        ) {
+
         Float[] embedding = embeddingClient.embed(question);
         String pgvectorFormat = toVectorString(embedding);
 
-        return documentChunkRepository.findSimilar(pgvectorFormat, TOP_K)
-                .stream()
-                .map(DocumentChunkSummary::getContent)
-                .collect(Collectors.toList());
+        List<SearchResultProjection> matches = documentChunkRepository.findSimilar(pgvectorFormat , userId, TOP_K);
+
+
+        List<SearchResult> results = matches.stream()
+                .filter(chunk -> chunk.getSimilarity() > MIN_SIMILARITY)
+                .sorted((a,b) -> 
+                    Double.compare(b.getSimilarity(), a.getSimilarity())
+                ) // Sort by similarity
+                .map(chunk -> new SearchResult(
+                        chunk.getDocumentId(),
+                        chunk.getDocumentName(),
+                        chunk.getContent(),
+                        chunk.getSimilarity()
+                ))
+                .toList();
+
+        return results;
     }
 
     private String toVectorString(Float[] embedding) {

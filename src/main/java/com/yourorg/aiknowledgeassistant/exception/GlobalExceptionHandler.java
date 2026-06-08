@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.Instant;
@@ -97,6 +98,18 @@ public class GlobalExceptionHandler {
                 .body(errorResponse(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "Something went wrong",
+                        null
+                ));
+    }
+
+    //max file size handler
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<?> handleMaxSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(errorResponse(
+                        HttpStatus.PAYLOAD_TOO_LARGE,
+                        "File size exceeds limit[10MB]",
                         null
                 ));
     }

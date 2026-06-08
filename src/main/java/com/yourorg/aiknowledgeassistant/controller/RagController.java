@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.yourorg.aiknowledgeassistant.dto.QueryResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,23 +39,31 @@ public class RagController {
     public ResponseEntity<String> ingest(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal Long userId) throws IOException {
+
         String content = fileParser.parse(file);
+
         documentService.ingest(file.getOriginalFilename(), content, userId);
+
         return ResponseEntity.ok("Ingested Successfully");
     }
 
     @PostMapping("/query")
-    public ResponseEntity<String> query(
-            @RequestBody String question,
+    public ResponseEntity<QueryResponse> query(
+            @RequestParam String question,
             @AuthenticationPrincipal Long userId) {
-        String answer = ragQueryService.query(question);
-        return ResponseEntity.ok(answer);
+
+        QueryResponse response = ragQueryService.query(
+                                            question,
+                                            userId);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/documents")
     public ResponseEntity<List<DocumentResponse>> listDocuments(
             @AuthenticationPrincipal Long userId,
             Authentication authentication) {
+
         boolean isAdmin = authentication.getAuthorities()
                 .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
@@ -67,15 +76,17 @@ public class RagController {
         return ResponseEntity.ok(documents);
     }
 
-    @DeleteMapping("/documents/{id")
+    @DeleteMapping("/documents/{id}")
     public ResponseEntity<Void> deleteDocument(
             @PathVariable Long id,
             @AuthenticationPrincipal Long userId,
             Authentication authentication) {
+
         boolean isAdmin = authentication.getAuthorities()
                 .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
         documentManagementService.deleteDocument(id, userId, isAdmin);
+
         return ResponseEntity.noContent().build();
     }
 }

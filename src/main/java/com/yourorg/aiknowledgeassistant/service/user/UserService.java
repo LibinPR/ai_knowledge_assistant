@@ -4,15 +4,19 @@ import com.yourorg.aiknowledgeassistant.domain.user.Role;
 import com.yourorg.aiknowledgeassistant.domain.user.User;
 import com.yourorg.aiknowledgeassistant.domain.user.UserCredentials;
 import com.yourorg.aiknowledgeassistant.domain.user.UserRole;
+import com.yourorg.aiknowledgeassistant.dto.DocumentSummaryResponse;
 import com.yourorg.aiknowledgeassistant.exception.EmailAlreadyExistsException;
 import com.yourorg.aiknowledgeassistant.repository.user.RoleRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserCredentialsRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserRepository;
+import com.yourorg.aiknowledgeassistant.repository.rag.DocumentRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserRoleRepository;
 import com.yourorg.aiknowledgeassistant.service.audit.AuditService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.*;
+import com.yourorg.aiknowledgeassistant.dto.DocumentSummaryResponse;
 
 @Service
 public class UserService {
@@ -23,6 +27,7 @@ public class UserService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
+    private final DocumentRepository documentRepository;
 
     public UserService(
             UserRepository userRepository,
@@ -30,7 +35,8 @@ public class UserService {
             RoleRepository roleRepository,
             UserRoleRepository userRoleRepository,
             PasswordEncoder passwordEncoder,
-            AuditService auditService
+            AuditService auditService,
+            DocumentRepository documentRepository
     ) {
         this.userRepository = userRepository;
         this.userCredentialsRepository = userCredentialsRepository;
@@ -38,6 +44,7 @@ public class UserService {
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
+        this.documentRepository = documentRepository;
     }
 
     @Transactional
@@ -79,5 +86,15 @@ public class UserService {
                 .orElseThrow();
 
         user.addRole(role);
+    }
+
+    public List<DocumentSummaryResponse> listDocuments(
+        Long userId
+    ) {
+        return documentRepository
+            .findByUploadedById(userId)
+            .stream()
+            .map(doc -> new DocumentSummaryResponse(doc.getId(), doc.getFilename()))
+            .toList();
     }
 }

@@ -3,9 +3,9 @@ spring:
     name: ai-knowledge-assistant
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/ai_knowledge_assistant
-    username: postgres
-    password: Libin@010
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -21,7 +21,13 @@ spring:
     baseline-on-migrate: false
 
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+    
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   tomcat:
@@ -31,17 +37,27 @@ server:
 
 security:
   jwt:
-    secret: "b25seWlrbm93dGhlc2VjcmV0YW5keW91cGVvcGxlY2FudGd1ZXNzaXQ="
+    secret: ${JWT_SECRET}
     access-token-ttl-seconds: 900
     refresh-token-ttl-seconds: 604800
     issuer: "ai-knowledge-assistant"
 
 groq:
-  api-key: "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"
-  base-url: "https://api.groq.com/openai/v1"
-  model: "llama-3.1-8b-instant"
+  api-key: ${GROQ_API_KEY}
+  base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
+  model: ${GROQ_MODEL:llama-3.1-8b-instant}
+
+embedding:
+  server:
+    url: ${HF_BASE_URL:http://localhost:8081/embed}
 
 logging:
   level:
     root: INFO
     com.yourorg: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
