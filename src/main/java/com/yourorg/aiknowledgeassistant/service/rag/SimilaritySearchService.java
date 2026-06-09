@@ -29,31 +29,11 @@ public class SimilaritySearchService {
         Long userId
         ) {
 
-        System.out.println("\n========== SIMILARITY SEARCH ==========");
-        System.out.println("Question: " + question);
-        System.out.println("User ID: " + userId);
-
         Float[] embedding = embeddingClient.embed(question);
-
-        System.out.println("Embedding Dimensions: " + embedding.length);
-        System.out.println("Embedding Sample: " +
-            Arrays.toString(Arrays.copyOf(embedding, Math.min(5, embedding.length)))
-    );
 
         String pgvectorFormat = toVectorString(embedding);
 
         List<SearchResultProjection> matches = documentChunkRepository.findSimilar(pgvectorFormat , userId, TOP_K);
-
-        System.out.println("MIN_SIMILARITY = " + MIN_SIMILARITY);
-        System.out.println("Raw Matches Returned = " + matches.size());
-
-        matches.forEach(chunk ->
-            System.out.printf(
-                    "RAW -> Doc=%s | Similarity=%.4f%n",
-                    chunk.getDocumentName(),
-                    chunk.getSimilarity()
-            )
-        );
 
         List<SearchResult> results = matches.stream()
                 .filter(chunk -> chunk.getSimilarity() > MIN_SIMILARITY)
@@ -67,17 +47,6 @@ public class SimilaritySearchService {
                         chunk.getSimilarity()
                 ))
                 .toList();
-
-    System.out.println("After Filter Count = " + results.size());
-
-    results.forEach(r ->
-            System.out.printf(
-                    "FINAL -> Doc=%s | Similarity=%.4f%n",
-                    r.documentName(),
-                    r.similarity()
-            )
-    );
-    System.out.println("==============================================\n");
 
         return results;
     }
