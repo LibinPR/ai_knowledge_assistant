@@ -1,5 +1,7 @@
 # AI Knowledge Assistant
 
+VISIT LINK = https://https://aiknowledgeassistant-production.up.railway.app/
+
 AI Knowledge Assistant is a Spring Boot application for uploading documents and asking questions against them with a Retrieval-Augmented Generation (RAG) workflow. Documents are parsed, chunked, embedded, stored in PostgreSQL with pgvector, and queried with semantic search before sending context to a Groq-hosted LLM.
 
 ## Features
@@ -340,4 +342,4 @@ Before deploying, verify the Docker configuration values match your environment,
 - Current implementation prioritizes simplicity over advanced reranking techniques.
 
 
-Refer SYSTEM DESIGN.md and  ARCHITECTURE.md for more detailed information
+Refer [SYSTEM_DESIGN.md](./SYSTEM_DESIGN.md) and  [ARCHITECTURE.md](./ARCHITECTURE.md) for more detailed information
