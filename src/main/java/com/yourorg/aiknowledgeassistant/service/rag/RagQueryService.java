@@ -27,6 +27,18 @@ public class RagQueryService {
                                                 userId 
                                             );
 
+        System.out.println("\n========== RAG DEBUG ==========");
+        System.out.println("Question: " + question);
+        System.out.println("Results found: " + results.size());
+
+        results.forEach(r ->
+            System.out.printf(
+                "Doc=%s | Similarity=%.4f%n",
+                r.documentName(),
+                r.similarity()
+            )
+        );
+
         if(results.isEmpty()) {
             return new QueryResponse("I don't have enough information to answer that question.", List.of());
         }
@@ -49,6 +61,10 @@ public class RagQueryService {
                 
                 Context:
                 """ + context;
+
+        System.out.println("\n===== CONTEXT =====");
+        System.out.println(context);
+        System.out.println("===================\n");
 
         String answer = groqClient.chat(systemPrompt,question);
 
