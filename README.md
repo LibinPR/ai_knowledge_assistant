@@ -333,8 +333,11 @@ Before deploying, verify the Docker configuration values match your environment,
 
 ![Admin stats screen](docs/screenshots/admin_stats.png)
 
-Known Limitations
+### Known Limitations
 
 - Retrieval quality depends on embedding similarity thresholds.
 - LLM responses may occasionally use general knowledge when document context is insufficient.
 - Current implementation prioritizes simplicity over advanced reranking techniques.
+
+
+Refer SYSTEM DESIGN.md and  ARCHITECTURE>md for more detailed information
