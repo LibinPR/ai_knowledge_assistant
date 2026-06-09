@@ -13,7 +13,7 @@ import com.yourorg.aiknowledgeassistant.dto.SearchResult;
 public class SimilaritySearchService {
 
     private static final int TOP_K = 3;
-    private static final double MIN_SIMILARITY = 0.60;
+    private static final double MIN_SIMILARITY = 0.50;
 
     private final EmbeddingClient embeddingClient;
     private final DocumentChunkRepository documentChunkRepository;

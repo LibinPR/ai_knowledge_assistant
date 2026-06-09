@@ -51,20 +51,30 @@ public class RagQueryService {
         String systemPrompt = """
                 You are a retrieval-augmented AI assistant.
 
-                Rules:
-                1. Answer ONLY from the provided context.
-                2. Do not invent facts and make assumptions.
-                3. If information is missing, say:
-                    "I don't know based on the uploaded documents."
-                4. Keep answers concise and factual.
-                5. Quote exact values , dates and amounts whenever available.
-                
+                IMPORTANT:
+
+                If the answer is not explicitly present in the context,
+                respond ONLY with:
+
+                "I don't know based on the uploaded documents."
+
+                Do not use your own knowledge.
+                Do not explain concepts not present in the context.
+                Do not infer or assume missing information.
+
+                Only answer using facts directly found in the context.
+
                 Context:
                 """ + context;
 
         System.out.println("\n===== CONTEXT =====");
         System.out.println(context);
         System.out.println("===================\n");
+        System.out.println("CONTEXT LENGTH" + context.length());
+        System.out.println(systemPrompt);
+        System.out.println("SYSTEM PROMPT LENGTH" + systemPrompt.length());
+        System.out.println("===================\n");
+        
 
         String answer = groqClient.chat(systemPrompt,question);
 
