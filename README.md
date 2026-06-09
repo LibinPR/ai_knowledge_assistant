@@ -340,4 +340,4 @@ Before deploying, verify the Docker configuration values match your environment,
 - Current implementation prioritizes simplicity over advanced reranking techniques.
 
 
-Refer SYSTEM DESIGN.md and  ARCHITECTURE>md for more detailed information
+Refer SYSTEM DESIGN.md and  ARCHITECTURE.md for more detailed information
