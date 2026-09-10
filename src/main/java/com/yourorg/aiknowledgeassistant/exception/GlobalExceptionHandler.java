@@ -10,6 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.Instant;
@@ -33,9 +35,8 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    //Runtime Exception handler
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleRuntime(RuntimeException ex) {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of(
@@ -43,6 +44,28 @@ public class GlobalExceptionHandler {
                         "status", 400,
                         "error", ex.getMessage()
                 ));
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<?> handleSecurity(SecurityException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(errorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(RestClientResponseException.class)
+    public ResponseEntity<?> handleUpstreamResponse(RestClientResponseException ex) {
+        log.warn("Upstream service returned {}", ex.getStatusCode().value());
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(errorResponse(HttpStatus.BAD_GATEWAY,
+                        "An AI provider rejected the request. Please retry shortly.", null));
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<?> handleUpstreamUnavailable(ResourceAccessException ex) {
+        log.warn("Upstream service is unavailable", ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(errorResponse(HttpStatus.SERVICE_UNAVAILABLE,
+                        "An AI provider is temporarily unavailable. Please retry shortly.", null));
     }
 
     //Validation errors

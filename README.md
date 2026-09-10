@@ -14,6 +14,8 @@ AI Knowledge Assistant is a Spring Boot application for uploading documents and 
 - Semantic document search using PostgreSQL and pgvector.
 - RAG question answering with source references.
 - Document listing and deletion.
+- Persistent document-processing lifecycle with queued, parsing, embedding, ready, and failed states.
+- Extraction-quality validation and owner-only document previews for transparent RAG ingestion.
 - Admin statistics for users, documents, and chunks.
 - Flyway-managed database migrations.
 - Simple static web UI served from Spring Boot.
@@ -271,6 +273,7 @@ Flyway runs automatically at startup and applies the migrations in `src/main/res
 | `POST` | `/api/rag/ingest` | Upload and ingest a document |
 | `POST` | `/api/rag/query?question=...` | Ask a question against uploaded documents |
 | `GET` | `/api/rag/documents` | List documents |
+| `GET` | `/api/rag/documents/{id}/preview` | View document processing metadata and extracted-text preview |
 | `DELETE` | `/api/rag/documents/{id}` | Delete a document |
 | `GET` | `/api/admin/stats` | Admin-only application stats |
 

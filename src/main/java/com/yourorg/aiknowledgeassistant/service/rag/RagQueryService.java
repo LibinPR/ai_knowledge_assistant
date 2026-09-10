@@ -8,17 +8,22 @@ import com.yourorg.aiknowledgeassistant.dto.SearchResult;
 import com.yourorg.aiknowledgeassistant.dto.QueryResponse;
 import com.yourorg.aiknowledgeassistant.dto.SourceDto;
 import com.yourorg.aiknowledgeassistant.repository.rag.DocumentChunkRepository;
+import com.yourorg.aiknowledgeassistant.repository.rag.DocumentRepository;
+import com.yourorg.aiknowledgeassistant.domain.rag.DocumentStatus;
 
 @Service
 public class RagQueryService {
 
     private final SimilaritySearchService similaritySearchService;
     private final GroqClient groqClient;
+    private final DocumentRepository documentRepository;
 
     public RagQueryService(SimilaritySearchService similaritySearchService,
-                           GroqClient groqClient) {
+                           GroqClient groqClient,
+                           DocumentRepository documentRepository) {
         this.similaritySearchService = similaritySearchService;
         this.groqClient = groqClient;
+        this.documentRepository = documentRepository;
     }
 
     public QueryResponse query(String question , Long userId) {
@@ -28,6 +33,11 @@ public class RagQueryService {
                                             );
 
         if(results.isEmpty()) {
+            long pendingDocuments = documentRepository.countByUploadedByIdAndProcessingStatusIn(userId,
+                    List.of(DocumentStatus.QUEUED, DocumentStatus.PARSING, DocumentStatus.EMBEDDING));
+            if (pendingDocuments > 0) {
+                return new QueryResponse("Your document is still being processed. Wait until its status is READY, then try again.", List.of());
+            }
             return new QueryResponse("I don't have enough information to answer that question.", List.of());
         }
 

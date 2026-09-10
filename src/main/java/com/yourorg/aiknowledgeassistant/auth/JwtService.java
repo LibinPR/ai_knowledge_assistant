@@ -8,6 +8,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,8 +29,26 @@ public class JwtService {
 
     public JwtService(JwtProperties props) {
         this.props = props;
-        byte[] keyBytes = Decoders.BASE64.decode(props.secret());
+        byte[] keyBytes = decodeSecret(props.secret());
         this.key = Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private byte[] decodeSecret(String configuredSecret) {
+        if (configuredSecret == null || configuredSecret.isBlank()) {
+            throw new IllegalArgumentException("JWT_SECRET must be configured");
+        }
+        String secret = configuredSecret.trim();
+        try {
+            return Decoders.BASE64.decode(secret);
+        } catch (DecodingException standardBase64Failure) {
+            try {
+                // Accept secrets generated with base64url tools as well as standard Base64.
+                return Decoders.BASE64URL.decode(secret);
+            } catch (DecodingException urlBase64Failure) {
+                throw new IllegalArgumentException(
+                        "JWT_SECRET must be valid standard or URL-safe Base64", urlBase64Failure);
+            }
+        }
     }
 
     // ACCESS TOKEN

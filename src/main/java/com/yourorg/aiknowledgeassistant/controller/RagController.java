@@ -3,8 +3,10 @@ package com.yourorg.aiknowledgeassistant.controller;
 import com.yourorg.aiknowledgeassistant.auth.dto.DocumentResponse;
 import com.yourorg.aiknowledgeassistant.service.rag.DocumentManagementService;
 import com.yourorg.aiknowledgeassistant.service.rag.DocumentService;
-import com.yourorg.aiknowledgeassistant.service.rag.FileParser;
 import com.yourorg.aiknowledgeassistant.service.rag.RagQueryService;
+import com.yourorg.aiknowledgeassistant.domain.rag.Document;
+import com.yourorg.aiknowledgeassistant.domain.rag.DocumentType;
+import com.yourorg.aiknowledgeassistant.dto.DocumentPreviewResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,30 +23,24 @@ import java.util.List;
 public class RagController {
 
     private final DocumentService documentService;
-    private final FileParser fileParser;
     private final RagQueryService ragQueryService;
     private final DocumentManagementService documentManagementService;
 
     public RagController(DocumentService documentService,
-            FileParser fileParser,
             RagQueryService ragQueryService,
             DocumentManagementService documentManagementService) {
         this.documentService = documentService;
-        this.fileParser = fileParser;
         this.ragQueryService = ragQueryService;
         this.documentManagementService = documentManagementService;
     }
 
     @PostMapping("/ingest")
-    public ResponseEntity<String> ingest(
+    public ResponseEntity<DocumentResponse> ingest(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "SUPPORTING") DocumentType documentType,
             @AuthenticationPrincipal Long userId) throws IOException {
-
-        String content = fileParser.parse(file);
-
-        documentService.ingest(file.getOriginalFilename(), content, userId);
-
-        return ResponseEntity.ok("Ingested Successfully");
+        Document document = documentService.submit(file, userId, documentType);
+        return ResponseEntity.accepted().body(DocumentResponse.from(document));
     }
 
     @PostMapping("/query")
@@ -74,6 +70,17 @@ public class RagController {
                 .toList();
 
         return ResponseEntity.ok(documents);
+    }
+
+    @GetMapping("/documents/{id}/preview")
+    public ResponseEntity<DocumentPreviewResponse> previewDocument(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userId,
+            Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        return ResponseEntity.ok(DocumentPreviewResponse.from(
+                documentManagementService.getDocument(id, userId, isAdmin)));
     }
 
     @DeleteMapping("/documents/{id}")

@@ -30,5 +30,7 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, Lo
                 @Param("userId") Long userId,
                 @Param("topK") int topK);
 
+        void deleteByDocument_Id(Long documentId);
+
         long count();
 }

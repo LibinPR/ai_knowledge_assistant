@@ -24,14 +24,18 @@ public class DocumentManagementService {
     return documentRepository.findByUploadedById(userId);
   }
 
-  @Transactional
-  public void deleteDocument(Long documentId, Long userId, boolean isAdmin) {
+  public Document getDocument(Long documentId, Long userId, boolean isAdmin) {
     Document document = documentRepository.findById(documentId)
         .orElseThrow(() -> new EntityNotFoundException("Document not found"));
-
     if (!isAdmin && !document.getUploadedBy().getId().equals(userId)) {
-      throw new SecurityException("You do not have permission to delete this document");
+      throw new SecurityException("You do not have permission to view this document");
     }
+    return document;
+  }
+
+  @Transactional
+  public void deleteDocument(Long documentId, Long userId, boolean isAdmin) {
+    Document document = getDocument(documentId, userId, isAdmin);
     documentRepository.delete(document);
   }
 }

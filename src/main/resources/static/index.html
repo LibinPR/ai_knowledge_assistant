@@ -9,12 +9,13 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0a0a0f;
+    --bg: #080b14;
     --surface: #13131a;
     --surface2: #1c1c27;
     --border: #2a2a3d;
-    --accent: #7c6dfa;
-    --accent2: #4fd1c5;
+    --accent: #8b5cf6;
+    --accent2: #2dd4bf;
+    --accent3: #fbbf24;
     --text: #e8e8f0;
     --text2: #8888aa;
     --danger: #f87171;
@@ -28,6 +29,17 @@
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .18;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black, transparent 75%);
   }
 
   /* ── AUTH SCREEN ── */
@@ -49,6 +61,7 @@
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 40px;
+    box-shadow: 0 25px 80px rgba(0,0,0,.35), 0 0 0 1px rgba(139,92,246,.08);
     animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
   }
 
@@ -317,6 +330,12 @@
     text-align: center;
   }
 
+  .doc-type-select {
+    width: 100%; margin-top: 10px; padding: 9px 10px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font: 11px 'DM Mono', monospace; outline: none;
+  }
+
   .docs-list {
     flex: 1;
     overflow-y: auto;
@@ -351,6 +370,13 @@
     flex-shrink: 0;
   }
 
+  .doc-meta { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+  .doc-status { font-size: 9px; letter-spacing: .7px; text-transform: uppercase; padding: 3px 6px; border-radius: 99px; border: 1px solid var(--border); color: var(--text2); }
+  .doc-status.ready { color: var(--success); border-color: rgba(52,211,153,.32); background: rgba(52,211,153,.08); }
+  .doc-status.queued, .doc-status.parsing, .doc-status.embedding { color: var(--accent2); border-color: rgba(79,209,197,.3); background: rgba(79,209,197,.07); }
+  .doc-status.failed { color: var(--danger); border-color: rgba(248,113,113,.3); background: rgba(248,113,113,.07); }
+  .doc-processing { font-size: 10px; color: var(--text2); }
+
   .btn-delete {
     background: none;
     border: none;
@@ -364,6 +390,9 @@
   }
 
   .btn-delete:hover { color: var(--danger); }
+
+  .btn-doc-info { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 13px; padding: 2px 4px; }
+  .btn-doc-info:hover { color: var(--accent2); }
 
   .docs-empty {
     font-size: 12px;
@@ -393,8 +422,10 @@
   }
 
   .chat-welcome {
-    text-align: center;
-    padding: 60px 20px;
+    width: min(960px, 100%);
+    margin: auto;
+    text-align: left;
+    padding: 34px 20px;
     animation: fadeIn 0.6s ease;
   }
 
@@ -419,8 +450,8 @@
     font-size: 13px;
     color: var(--text2);
     line-height: 1.6;
-    max-width: 360px;
-    margin: 0 auto;
+    max-width: 600px;
+    margin: 0;
   }
 
   .message {
@@ -541,6 +572,63 @@
   .btn-send:active { transform: scale(0.95); }
   .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.25px;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+  }
+
+  .eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 14px var(--accent2); }
+  .welcome-title { font-size: clamp(28px, 4vw, 45px); letter-spacing: -1.5px; line-height: 1.05; max-width: 700px; }
+  .welcome-title em { font-style: normal; color: var(--accent2); }
+
+  .career-grid { display: grid; grid-template-columns: 1.35fr .9fr; gap: 14px; margin-top: 30px; }
+  .career-card {
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(139,92,246,.18), rgba(45,212,191,.09));
+    border: 1px solid rgba(139,92,246,.35);
+    border-radius: 16px;
+  }
+  .career-card::after { content: ''; position: absolute; width: 180px; height: 180px; right: -70px; top: -80px; border-radius: 50%; background: rgba(45,212,191,.17); filter: blur(12px); }
+  .career-card h2 { font-family: 'Syne', sans-serif; font-size: 18px; margin-bottom: 7px; position: relative; z-index: 1; }
+  .career-card p { color: var(--text2); font-size: 12px; line-height: 1.65; max-width: 430px; position: relative; z-index: 1; }
+  .plan-button { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 10px 13px; margin-top: 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; background: rgba(255,255,255,.1); color: white; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: transform .2s, background .2s; }
+  .plan-button:hover { transform: translateY(-2px); background: var(--accent); }
+  .progress-card { padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .progress-top { display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px; }
+  .progress-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .progress-value { font-family: 'Syne', sans-serif; font-size: 26px; color: var(--accent3); }
+  .meter { height: 7px; border-radius: 99px; background: var(--surface2); overflow: hidden; }
+  .meter span { display: block; width: 34%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .progress-note { margin-top: 12px; color: var(--text2); font-size: 11px; line-height: 1.5; }
+  .prompt-label { margin: 25px 0 10px; color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; }
+  .prompt-row { display: flex; gap: 9px; flex-wrap: wrap; }
+  .prompt-chip { border: 1px solid var(--border); border-radius: 99px; padding: 9px 12px; background: var(--surface); color: var(--text); font: 11px 'DM Mono', monospace; cursor: pointer; transition: .2s; }
+  .prompt-chip:hover { border-color: var(--accent2); color: var(--accent2); transform: translateY(-1px); }
+
+  @media (max-width: 700px) {
+    .topbar { padding: 13px 15px; }
+    .user-badge { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar { width: 220px; }
+    .career-grid { grid-template-columns: 1fr; }
+    .chat-messages { padding: 14px; }
+    .chat-input-bar { padding: 12px; }
+  }
+
+  @media (max-width: 540px) {
+    .sidebar { display: none; }
+    .topbar-logo { font-size: 13px; }
+    .auth-card { padding: 30px 24px; }
+  }
+
   /* scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -558,7 +646,7 @@
       <span></span>
       AI Knowledge Assistant
     </div>
-    <p class="auth-subtitle">Ask questions. Get answers from your documents.</p>
+    <p class="auth-subtitle">Turn your experience into clear, interview-ready answers.</p>
 
     <div class="tab-row">
       <button class="tab-btn active" onclick="switchTab('login')">Login</button>
@@ -619,6 +707,11 @@
             PDF, TXT, MD, or DOCX — max 10MB
           </div>
         </div>
+        <select class="doc-type-select" id="document-type" aria-label="Document type">
+          <option value="RESUME">R&eacute;sum&eacute;</option>
+          <option value="JOB_DESCRIPTION">Job description</option>
+          <option value="SUPPORTING" selected>Supporting document</option>
+        </select>
         <button class="btn-upload" id="btn-upload" onclick="uploadFile()">Upload</button>
         <div class="upload-status" id="upload-status"></div>
       </div>
@@ -640,15 +733,33 @@
     <div class="chat-area">
       <div class="chat-messages" id="chat-messages">
         <div class="chat-welcome" id="chat-welcome">
-          <div class="welcome-icon">🧠</div>
-          <div class="welcome-title">Ask your documents anything</div>
-          <div class="welcome-sub">Upload a PDF , TXT ,Markdown or Word document file, then ask questions. The AI will answer using only your documents.</div>
+          <div class="eyebrow">Your career command centre</div>
+          <div class="welcome-title">Make your next move <em>impossible to ignore.</em></div>
+          <div class="welcome-sub">Upload your r&eacute;sum&eacute;, portfolio, or a role description. Then turn the material you already have into sharper applications and confident interview stories.</div>
+          <div class="career-grid">
+            <section class="career-card">
+              <h2>Your next 7-day hiring plan</h2>
+              <p>Get a focused sprint tailored to your documents: positioning, targeted applications, interview practice, and the next best action each day.</p>
+              <button class="plan-button" onclick="startHiringPlan()">Build my plan <span aria-hidden="true">&rarr;</span></button>
+            </section>
+            <section class="progress-card">
+              <div class="progress-top"><div class="progress-label">Career momentum</div><div class="progress-value">01</div></div>
+              <div class="meter"><span></span></div>
+              <div class="progress-note">Start by uploading a r&eacute;sum&eacute; or job description. The assistant will use only your documents.</div>
+            </section>
+          </div>
+          <div class="prompt-label">Start with a high-impact prompt</div>
+          <div class="prompt-row">
+            <button class="prompt-chip" onclick="usePrompt('Review my resume and identify the three strongest stories I should lead with in interviews.')">Find my strongest stories</button>
+            <button class="prompt-chip" onclick="usePrompt('Compare my resume to this role. What skills should I emphasise and what gaps should I address?')">Tailor to a role</button>
+            <button class="prompt-chip" onclick="usePrompt('Create five realistic interview questions from my resume and show what a strong answer should cover.')">Practice interviews</button>
+          </div>
         </div>
       </div>
 
       <div class="chat-input-bar">
         <textarea class="chat-input" id="chat-input"
-          placeholder="Ask a question about your documents..."
+          placeholder="Ask about your r&eacute;sum&eacute;, portfolio, or target role..."
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"></textarea>
         <button class="btn-send" id="btn-send" onclick="sendMessage()">➤</button>
@@ -774,10 +885,47 @@
     }
     list.innerHTML = docs.map(d => `
       <div class="doc-item">
-        <span class="doc-name" title="${d.filename}">📄 ${d.filename}</span>
+        <div style="min-width:0; flex:1;">
+          <div class="doc-name" title="${escapeHtml(d.filename)}">📄 ${escapeHtml(d.filename)}</div>
+          <div class="doc-meta">
+            <span class="doc-status ${(d.processingStatus || 'ready').toLowerCase()}">${escapeHtml(d.processingStatus || 'READY')}</span>
+            <span class="doc-processing">${docStatusDetail(d)}</span>
+          </div>
+        </div>
+        <button class="btn-doc-info" onclick="showDocumentPreview(${d.id})" title="Document details">ⓘ</button>
         <button class="btn-delete" onclick="deleteDoc(${d.id})" title="Delete">✕</button>
       </div>
     `).join('');
+
+    if (docs.some(d => ['QUEUED', 'PARSING', 'EMBEDDING'].includes(d.processingStatus))) {
+      setTimeout(loadDocuments, 3_000);
+    }
+  }
+
+  function docStatusDetail(doc) {
+    if (doc.processingStatus === 'READY') return `${doc.chunkCount || 0} searchable chunks`;
+    if (doc.processingStatus === 'FAILED') return 'Needs attention';
+    return 'Processing…';
+  }
+
+  async function showDocumentPreview(id) {
+    try {
+      const res = await authFetch(`/api/rag/documents/${id}/preview`);
+      if (!res.ok) throw new Error('Unable to load document details');
+      const doc = await res.json();
+      const details = [
+        `Status: ${doc.status}`,
+        `Type: ${doc.type}`,
+        `Extracted text: ${doc.extractedCharacters || 0} characters`,
+        `Searchable chunks: ${doc.chunkCount || 0}`,
+        doc.pageCount ? `Pages: ${doc.pageCount}` : '',
+        doc.processingError ? `Issue: ${doc.processingError}` : '',
+        doc.extractedTextPreview ? `\nPreview:\n${doc.extractedTextPreview}` : ''
+      ].filter(Boolean).join('\n');
+      alert(details);
+    } catch (e) {
+      alert('Unable to load document details right now.');
+    }
   }
 
   async function deleteDoc(id) {
@@ -872,11 +1020,12 @@
 
     const form = new FormData();
     form.append('file', selectedFile);
+    form.append('documentType', document.getElementById('document-type').value);
 
     try {
       const res = await authFetch('/api/rag/ingest', { method: 'POST', body: form });
       if (res.ok) {
-        status.textContent = '✓ Uploaded successfully';
+        status.textContent = 'Queued for processing';
         status.style.color = 'var(--success)';
         selectedFile = null;
         document.getElementById('file-input').value = '';
@@ -899,6 +1048,17 @@
   }
 
   // ── CHAT ──
+  function usePrompt(prompt) {
+    const input = document.getElementById('chat-input');
+    input.value = prompt;
+    input.focus();
+    autoResize(input);
+  }
+
+  function startHiringPlan() {
+    usePrompt('Using my uploaded resume, portfolio, and any role description, create a focused 7-day job-search plan. For each day, give me one high-impact action, an expected outcome, and a short example I can use. Start by telling me what information is missing from my documents.');
+  }
+
   async function sendMessage() {
     const input = document.getElementById('chat-input');
     const question = input.value.trim();

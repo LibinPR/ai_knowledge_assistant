@@ -2,8 +2,10 @@ package com.yourorg.aiknowledgeassistant;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.yourorg")
+@EnableScheduling
 public class AiKnowledgeAssistantApplication {
 
 	public static void main(String[] args) {
