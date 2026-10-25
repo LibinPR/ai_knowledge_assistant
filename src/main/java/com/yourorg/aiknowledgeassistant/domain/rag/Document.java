@@ -1,6 +1,7 @@
 package com.yourorg.aiknowledgeassistant.domain.rag;
 
 import com.yourorg.aiknowledgeassistant.domain.user.User;
+import com.yourorg.aiknowledgeassistant.domain.workspace.Workspace;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -20,6 +21,10 @@ public class Document {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by", nullable = false)
     private User uploadedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspace_id", nullable = false)
+    private Workspace workspace;
 
     @Column(nullable = false)
     private LocalDateTime uploadedAt = LocalDateTime.now();
@@ -55,9 +60,10 @@ public class Document {
 
     protected Document() {}
 
-    public Document(String filename, User uploadedBy, DocumentType documentType, byte[] sourceContent) {
+    public Document(String filename, User uploadedBy, Workspace workspace, DocumentType documentType, byte[] sourceContent) {
         this.filename = filename;
         this.uploadedBy = uploadedBy;
+        this.workspace = workspace;
         this.documentType = documentType == null ? DocumentType.SUPPORTING : documentType;
         this.sourceContent = sourceContent;
     }
@@ -91,6 +97,7 @@ public class Document {
     public Long getId() { return id; }
     public String getFilename() { return filename; }
     public User getUploadedBy() { return uploadedBy; }
+    public Workspace getWorkspace() { return workspace; }
     public LocalDateTime getUploadedAt() { return uploadedAt; }
     public DocumentType getDocumentType() { return documentType; }
     public DocumentStatus getProcessingStatus() { return processingStatus; }

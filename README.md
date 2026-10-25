@@ -16,6 +16,7 @@ AI Knowledge Assistant is a Spring Boot application for uploading documents and 
 - Document listing and deletion.
 - Persistent document-processing lifecycle with queued, parsing, embedding, ready, and failed states.
 - Extraction-quality validation and owner-only document previews for transparent RAG ingestion.
+- Hybrid semantic and keyword retrieval with reciprocal-rank fusion, section/page metadata, and evidence excerpts.
 - Admin statistics for users, documents, and chunks.
 - Flyway-managed database migrations.
 - Simple static web UI served from Spring Boot.

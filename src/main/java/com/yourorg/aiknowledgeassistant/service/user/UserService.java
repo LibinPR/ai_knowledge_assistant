@@ -4,6 +4,9 @@ import com.yourorg.aiknowledgeassistant.domain.user.Role;
 import com.yourorg.aiknowledgeassistant.domain.user.User;
 import com.yourorg.aiknowledgeassistant.domain.user.UserCredentials;
 import com.yourorg.aiknowledgeassistant.domain.user.UserRole;
+import com.yourorg.aiknowledgeassistant.domain.workspace.Workspace;
+import com.yourorg.aiknowledgeassistant.domain.workspace.WorkspaceMembership;
+import com.yourorg.aiknowledgeassistant.domain.workspace.WorkspaceMembershipRole;
 import com.yourorg.aiknowledgeassistant.dto.DocumentSummaryResponse;
 import com.yourorg.aiknowledgeassistant.exception.EmailAlreadyExistsException;
 import com.yourorg.aiknowledgeassistant.repository.user.RoleRepository;
@@ -11,6 +14,8 @@ import com.yourorg.aiknowledgeassistant.repository.user.UserCredentialsRepositor
 import com.yourorg.aiknowledgeassistant.repository.user.UserRepository;
 import com.yourorg.aiknowledgeassistant.repository.rag.DocumentRepository;
 import com.yourorg.aiknowledgeassistant.repository.user.UserRoleRepository;
+import com.yourorg.aiknowledgeassistant.repository.workspace.WorkspaceMembershipRepository;
+import com.yourorg.aiknowledgeassistant.repository.workspace.WorkspaceRepository;
 import com.yourorg.aiknowledgeassistant.service.audit.AuditService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +33,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final DocumentRepository documentRepository;
+    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMembershipRepository workspaceMembershipRepository;
 
     public UserService(
             UserRepository userRepository,
@@ -36,7 +43,9 @@ public class UserService {
             UserRoleRepository userRoleRepository,
             PasswordEncoder passwordEncoder,
             AuditService auditService,
-            DocumentRepository documentRepository
+            DocumentRepository documentRepository,
+            WorkspaceRepository workspaceRepository,
+            WorkspaceMembershipRepository workspaceMembershipRepository
     ) {
         this.userRepository = userRepository;
         this.userCredentialsRepository = userCredentialsRepository;
@@ -45,6 +54,8 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
         this.documentRepository = documentRepository;
+        this.workspaceRepository = workspaceRepository;
+        this.workspaceMembershipRepository = workspaceMembershipRepository;
     }
 
     @Transactional
@@ -66,6 +77,11 @@ public class UserService {
 
         UserRole assignment = new UserRole(user , userRole);
         userRoleRepository.save(assignment);
+
+        Workspace personalWorkspace = workspaceRepository.saveAndFlush(
+                new Workspace("Personal", "personal-" + user.getId(), user));
+        workspaceMembershipRepository.save(new WorkspaceMembership(
+                personalWorkspace, user, WorkspaceMembershipRole.OWNER));
 
         auditService.log(
                 user.getId(),

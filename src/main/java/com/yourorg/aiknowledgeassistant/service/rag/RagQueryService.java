@@ -2,14 +2,17 @@ package com.yourorg.aiknowledgeassistant.service.rag;
 
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.yourorg.aiknowledgeassistant.dto.SearchResult;
 import com.yourorg.aiknowledgeassistant.dto.QueryResponse;
 import com.yourorg.aiknowledgeassistant.dto.SourceDto;
-import com.yourorg.aiknowledgeassistant.repository.rag.DocumentChunkRepository;
 import com.yourorg.aiknowledgeassistant.repository.rag.DocumentRepository;
 import com.yourorg.aiknowledgeassistant.domain.rag.DocumentStatus;
+import com.yourorg.aiknowledgeassistant.domain.workspace.WorkspaceMembershipRole;
+import com.yourorg.aiknowledgeassistant.service.workspace.WorkspaceAccessService;
+
 
 @Service
 public class RagQueryService {
@@ -17,13 +20,16 @@ public class RagQueryService {
     private final SimilaritySearchService similaritySearchService;
     private final GroqClient groqClient;
     private final DocumentRepository documentRepository;
+    private final WorkspaceAccessService workspaceAccessService;
 
     public RagQueryService(SimilaritySearchService similaritySearchService,
                            GroqClient groqClient,
-                           DocumentRepository documentRepository) {
+                           DocumentRepository documentRepository,
+                           WorkspaceAccessService workspaceAccessService) {
         this.similaritySearchService = similaritySearchService;
         this.groqClient = groqClient;
         this.documentRepository = documentRepository;
+        this.workspaceAccessService = workspaceAccessService;
     }
 
     public QueryResponse query(String question , Long userId) {
@@ -42,7 +48,10 @@ public class RagQueryService {
         }
 
         String context = results.stream()
-                .map(SearchResult::content)
+                .map(result -> "[Source: " + result.documentName()
+                        + " | section: " + result.sectionTitle()
+                        + (result.pageNumber() == null ? "" : " | page: " + result.pageNumber())
+                        + "]\n" + result.content())
                 .collect(Collectors.joining("\n\n---\n\n"));
                 
 
@@ -69,16 +78,20 @@ public class RagQueryService {
         String answer = groqClient.chat(systemPrompt,question);
 
         List<SourceDto> sources = results.stream()
-            .sorted((a,b) -> Double.compare(b.similarity(), a.similarity())) // Sort by similarity
+            .sorted((a,b) -> Double.compare(b.hybridScore(), a.hybridScore()))
                 .collect(
                     Collectors.toMap(
                         SearchResult::documentId,
                         r -> new SourceDto(
                             r.documentId(),
                             r.documentName(),
-                            r.similarity()
+                            r.similarity(),
+                            r.pageNumber(),
+                            r.sectionTitle(),
+                            excerpt(r.content())
                         ),
-                        (existing , replacement) -> existing
+                        (existing , replacement) -> existing,
+                        LinkedHashMap::new
                     )
                 )
                 .values()
@@ -86,5 +99,96 @@ public class RagQueryService {
                 .toList();
 
         return new QueryResponse(answer , sources);
+    }
+
+    
+    public QueryResponse queryInWorkspace(
+            String question,
+            Long userId,
+            Long workspaceId) {
+
+        workspaceAccessService.requireRole(
+                workspaceId,
+                userId,
+                WorkspaceMembershipRole.VIEWER);
+
+        List<SearchResult> results =
+                similaritySearchService.searchInWorkspace(question, workspaceId);
+
+        if (results.isEmpty()) {
+            long pendingDocuments =
+                    documentRepository.countByWorkspace_IdAndProcessingStatusIn(
+                            workspaceId,
+                            List.of(
+                                    DocumentStatus.QUEUED,
+                                    DocumentStatus.PARSING,
+                                    DocumentStatus.EMBEDDING));
+
+            if (pendingDocuments > 0) {
+                return new QueryResponse(
+                        "Documents in this workspace are still being processed. Wait until they are READY, then try again.",
+                        List.of());
+            }
+
+            return new QueryResponse(
+                    "I don't have enough information to answer that question.",
+                    List.of());
+        }
+
+        String context = results.stream()
+                .map(result -> "[Source: " + result.documentName()
+                        + " | section: " + result.sectionTitle()
+                        + (result.pageNumber() == null
+                            ? ""
+                            : " | page: " + result.pageNumber())
+                        + "]\n" + result.content())
+                .collect(Collectors.joining("\n\n---\n\n"));
+
+        String systemPrompt = """
+                You are a retrieval-augmented AI assistant.
+
+                IMPORTANT:
+
+                If the answer is not explicitly present in the context,
+                respond ONLY with:
+
+                "I don't know based on the uploaded documents."
+
+                Do not use your own knowledge.
+                Do not explain concepts not present in the context.
+                Do not infer or assume missing information.
+
+                Only answer using facts directly found in the context.
+
+                Context:
+                """ + context;
+
+        String answer = groqClient.chat(systemPrompt, question);
+
+        List<SourceDto> sources = results.stream()
+                .sorted((a, b) ->
+                        Double.compare(b.hybridScore(), a.hybridScore()))
+                .collect(Collectors.toMap(
+                        SearchResult::documentId,
+                        result -> new SourceDto(
+                                result.documentId(),
+                                result.documentName(),
+                                result.similarity(),
+                                result.pageNumber(),
+                                result.sectionTitle(),
+                                excerpt(result.content())),
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new))
+                .values()
+                .stream()
+                .toList();
+
+        return new QueryResponse(answer, sources);
+    }
+
+
+    private String excerpt(String content) {
+        if (content == null) return "";
+        return content.length() <= 280 ? content : content.substring(0, 280) + "…";
     }
 }

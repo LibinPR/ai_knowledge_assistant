@@ -6,6 +6,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import com.yourorg.aiknowledgeassistant.domain.rag.Document;
 import org.springframework.stereotype.Service;
+import com.yourorg.aiknowledgeassistant.domain.workspace.WorkspaceMembershipRole;
+import com.yourorg.aiknowledgeassistant.service.workspace.WorkspaceAccessService;
 
 import java.util.List;
 
@@ -13,8 +15,13 @@ import java.util.List;
 public class DocumentManagementService {
   private final DocumentRepository documentRepository;
 
-  public DocumentManagementService(DocumentRepository documentRepository) {
+  private final WorkspaceAccessService workspaceAccessService;
+
+  public DocumentManagementService(
+    DocumentRepository documentRepository,
+    WorkspaceAccessService workspaceAccessService) {
     this.documentRepository = documentRepository;
+    this.workspaceAccessService = workspaceAccessService;
   }
 
   public List<Document> listDocuments(Long userId, boolean isAdmin) {
@@ -37,5 +44,18 @@ public class DocumentManagementService {
   public void deleteDocument(Long documentId, Long userId, boolean isAdmin) {
     Document document = getDocument(documentId, userId, isAdmin);
     documentRepository.delete(document);
+  }
+
+  public List<Document> listWorkspaceDocuments(
+        Long workspaceId,
+        Long userId) {
+
+    workspaceAccessService.requireRole(
+            workspaceId,
+            userId,
+            WorkspaceMembershipRole.VIEWER);
+
+    return documentRepository
+            .findByWorkspace_IdOrderByUploadedAtDesc(workspaceId);
   }
 }

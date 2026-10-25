@@ -721,6 +721,7 @@
         <div class="docs-list" id="docs-list">
           <div class="docs-empty">No documents yet</div>
         </div>
+        <button class="plan-button" id="match-button" style="display:none; margin:12px 0 16px;" onclick="generateMatchReport()">Generate role match <span aria-hidden="true">&rarr;</span></button>
       </div>
 
       <div id="admin-panel" class="sidebar-section" style="display:none;">
@@ -879,6 +880,14 @@
 
   function renderDocs(docs) {
     const list = document.getElementById('docs-list');
+    const matchButton = document.getElementById('match-button');
+    const resume = (docs || []).find(d => d.documentType === 'RESUME' && d.processingStatus === 'READY');
+    const job = (docs || []).find(d => d.documentType === 'JOB_DESCRIPTION' && d.processingStatus === 'READY');
+    if (matchButton) {
+      matchButton.style.display = resume && job ? 'block' : 'none';
+      matchButton.dataset.resumeId = resume ? resume.id : '';
+      matchButton.dataset.jobId = job ? job.id : '';
+    }
     if (!docs || docs.length === 0) {
       list.innerHTML = '<div class="docs-empty">No documents yet</div>';
       return;
@@ -899,6 +908,29 @@
 
     if (docs.some(d => ['QUEUED', 'PARSING', 'EMBEDDING'].includes(d.processingStatus))) {
       setTimeout(loadDocuments, 3_000);
+    }
+  }
+
+  async function generateMatchReport() {
+    const button = document.getElementById('match-button');
+    if (!button.dataset.resumeId || !button.dataset.jobId) return;
+    button.disabled = true;
+    button.textContent = 'Analysing fit...';
+    try {
+      const res = await authFetch('/api/career/matches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeDocumentId: Number(button.dataset.resumeId), jobDescriptionDocumentId: Number(button.dataset.jobId) })
+      });
+      const data = await res.json();
+      if (!res.ok || data.status !== 'READY') throw new Error(data.error || 'Match report failed');
+      const report = data.report;
+      addMessage('assistant', `<strong>Role match: ${escapeHtml(String(report.overallFit))}/100</strong><br>${escapeHtml(report.summary)}<br><br><strong>Strengths</strong><br>${(report.strengths || []).map(x => '• ' + escapeHtml(x.requirement || x.evidence || '')).join('<br>')}<br><br><strong>Gaps to address</strong><br>${(report.gaps || []).map(x => '• ' + escapeHtml(x.requirement || x.reason || '')).join('<br>')}<br><br><strong>Next actions</strong><br>${(report.recommendations || []).map(x => '• ' + escapeHtml(x.action || x.why || '')).join('<br>')}`);
+    } catch (e) {
+      addMessage('assistant', 'I could not generate the role match right now. Make sure both documents are READY and try again.');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = 'Generate role match <span aria-hidden="true">&rarr;</span>';
     }
   }
 

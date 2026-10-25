@@ -33,10 +33,17 @@ public class DocumentChunk {
     protected DocumentChunk() {}
 
     public DocumentChunk(Document document, String content, Float[] embedding, int chunkIndex) {
+        this(document, content, embedding, chunkIndex, null, "General");
+    }
+
+    public DocumentChunk(Document document, String content, Float[] embedding,
+                         int chunkIndex, Integer pageNumber, String sectionTitle) {
         this.document = document;
         this.content = content;
         this.embedding = embedding;
         this.chunkIndex = chunkIndex;
+        this.pageNumber = pageNumber;
+        this.sectionTitle = sectionTitle;
     }
 
     public Long getId() { return id; }
